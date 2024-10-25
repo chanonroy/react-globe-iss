@@ -86,6 +86,7 @@ export default function App() {
         setIssData({
           currentLat: degreesLat(currentPositionGd.latitude),
           currentLng: degreesLong(currentPositionGd.longitude),
+          // TODO: check math here
           previousLat: -degreesLat(previousPositionGd.latitude),
           previousLng: degreesLong(previousPositionGd.longitude),
         });
@@ -100,17 +101,32 @@ export default function App() {
     getIssData();
   }, []);
 
+  const linksData = [
+    {
+      start: {
+        lat: issData?.previousLat,
+        lng: issData?.previousLng,
+        alt: ALTITUDE,
+      },
+      end: {
+        lat: issData?.currentLat,
+        lng: issData?.currentLng,
+        alt: ALTITUDE,
+      },
+    },
+  ];
+
   return (
     <div style={{ display: "flex", justifyContent: "right" }}>
       <ReactGlobe
         ref={globeRef}
-        // globe properties
+        // Globe style properties
         height={height}
         width={width}
         backgroundColor="#08070e"
         backgroundImageUrl={stars}
         globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-        // ISS render
+        // ISS custom layer
         customLayerData={[
           {
             lat: issData?.currentLat,
@@ -138,6 +154,14 @@ export default function App() {
             );
           }
         }}
+        // Telemetry lines custom layer
+        pathsData={linksData}
+        pathPoints={(link) => [(link as any).start, (link as any).end]}
+        pathPointLat="lat"
+        pathPointLng="lng"
+        pathPointAlt="alt"
+        pathStroke={2}
+        pathTransitionDuration={0}
       />
     </div>
   );
