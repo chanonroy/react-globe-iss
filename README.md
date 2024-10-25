@@ -1,4 +1,6 @@
-# React-Globe ISS tracker
+# 🌎🛰️ React-Globe ISS tracker
+
+<img src="https://github.com/chanonroy/react-globe-iss/blob/main/docs/screenshot.png" width="500" />
 
 Playing around with space object telemetry data combined with three.js visualisations
 
