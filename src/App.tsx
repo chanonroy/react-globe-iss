@@ -36,7 +36,6 @@ export default function App() {
 
   useEffect(() => {
     window.addEventListener("resize", throttledResize);
-
     return () => {
       window.removeEventListener("resize", throttledResize); // Cleanup on unmount
     };
@@ -90,6 +89,15 @@ export default function App() {
           previousLat: -degreesLat(previousPositionGd.latitude),
           previousLng: degreesLong(previousPositionGd.longitude),
         });
+
+        globeRef.current?.pointOfView(
+          {
+            lat: degreesLat(currentPositionGd.latitude),
+            lng: degreesLong(currentPositionGd.longitude),
+            altitude: 2.5,
+          },
+          [1500]
+        );
       }
     } catch (error) {
       //
