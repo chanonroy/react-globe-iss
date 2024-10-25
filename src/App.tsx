@@ -10,7 +10,7 @@ import {
   degreesLong,
   degreesLat,
 } from "satellite.js";
-import stars from "./stars.jpg";
+import stars from "./stars-min.jpg";
 
 interface ISSData {
   currentLat: number;
