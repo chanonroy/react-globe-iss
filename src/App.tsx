@@ -1,16 +1,10 @@
 import { throttle } from "lodash";
 import { useEffect, useRef, useState } from "react";
-import { Mesh, TetrahedronGeometry, MeshLambertMaterial } from "three";
 import ReactGlobe from "react-globe.gl";
-import {
-  twoline2satrec,
-  propagate,
-  gstime,
-  eciToGeodetic,
-  degreesLong,
-  degreesLat,
-} from "satellite.js";
+import { twoline2satrec } from "satellite.js";
+import { Mesh, MeshLambertMaterial, TetrahedronGeometry } from "three";
 import stars from "./stars-min.jpg";
+import getISSPosition from "./utils/get-iss-position";
 
 interface ISSData {
   currentLat: number;
@@ -63,37 +57,25 @@ export default function App() {
         // Initialize a satellite record
         const satrec = twoline2satrec(tleLine1, tleLine2);
 
-        // You will need GMST for some of the coordinate transforms.
-        // http://en.wikipedia.org/wiki/Sidereal_time#Definition
-        const currentDate = new Date();
-        const previousDate = new Date(Date.now() - 12 * 60 * 60 * 1000); // 1 day
+        // Current date and time
+        const nowDate = new Date();
+        const pastDate = new Date(Date.now() - 12 * 60 * 60 * 1000); // 12 hours
 
-        const gmstNow = gstime(currentDate);
-        const gmstPrevious = gstime(previousDate);
-
-        // The position_velocity result is a key-value pair of ECI coordinates.
-        // These are the base results from which all other coordinates are derived.
-        const currentPositionGd = eciToGeodetic(
-          propagate(satrec, currentDate).position as any,
-          gmstNow
-        );
-        const previousPositionGd = eciToGeodetic(
-          propagate(satrec, previousDate).position as any,
-          gmstPrevious
-        );
+        const currentISSPosition = getISSPosition(satrec, nowDate);
+        const previousISSPosition = getISSPosition(satrec, pastDate);
 
         setIssData({
-          currentLat: degreesLat(currentPositionGd.latitude),
-          currentLng: degreesLong(currentPositionGd.longitude),
+          currentLat: currentISSPosition.latitude,
+          currentLng: currentISSPosition.longitude,
           // TODO: check math here
-          previousLat: -degreesLat(previousPositionGd.latitude),
-          previousLng: degreesLong(previousPositionGd.longitude),
+          previousLat: -previousISSPosition.latitude,
+          previousLng: previousISSPosition.longitude,
         });
 
         globeRef.current?.pointOfView(
           {
-            lat: degreesLat(currentPositionGd.latitude),
-            lng: degreesLong(currentPositionGd.longitude),
+            lat: currentISSPosition.latitude,
+            lng: currentISSPosition.longitude,
             altitude: 2.5,
           },
           [1500]
