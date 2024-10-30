@@ -1,7 +1,7 @@
 import { throttle } from "lodash";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactGlobe from "react-globe.gl";
-import { twoline2satrec } from "satellite.js";
+import { SatRec, twoline2satrec } from "satellite.js";
 import { Mesh, MeshLambertMaterial, TetrahedronGeometry } from "three";
 import stars from "./stars-min.jpg";
 import getISSPosition from "./utils/get-iss-position";
@@ -19,6 +19,7 @@ export default function App() {
   const [height, setHeight] = useState(window.innerHeight);
   const [width, setWidth] = useState(window.innerWidth);
   const [issData, setIssData] = useState<ISSData | null>(null);
+  const [savedSatRec, setSavedSatRec] = useState<SatRec | null>(null);
   const globeRef = useRef<any>();
 
   const handleResize = () => {
@@ -31,11 +32,43 @@ export default function App() {
   useEffect(() => {
     window.addEventListener("resize", throttledResize);
     return () => {
-      window.removeEventListener("resize", throttledResize); // Cleanup on unmount
+      // Cleanup on unmount
+      window.removeEventListener("resize", throttledResize);
     };
   }, [throttledResize]);
 
-  async function getIssData() {
+  const updateISSPosition = useCallback(() => {
+    if (!savedSatRec) {
+      return;
+    }
+
+    // Current date and time
+    const nowDate = new Date();
+    const pastDate = new Date(Date.now() - 12 * 60 * 60 * 1000); // 12 hours
+
+    const currentISSPosition = getISSPosition(savedSatRec, nowDate);
+    const previousISSPosition = getISSPosition(savedSatRec, pastDate);
+
+    setIssData({
+      currentLat: currentISSPosition.latitude,
+      currentLng: currentISSPosition.longitude,
+      // TODO: check math here
+      previousLat: -previousISSPosition.latitude,
+      previousLng: previousISSPosition.longitude,
+    });
+  }, [savedSatRec, setIssData]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log("update");
+      updateISSPosition();
+    }, 1500);
+
+    //Clearing the interval
+    return () => clearInterval(interval);
+  }, [updateISSPosition]);
+
+  async function getISSData() {
     const url = "https://live.ariss.org/iss.txt";
     try {
       const response = await fetch(url);
@@ -80,6 +113,8 @@ export default function App() {
           },
           [1500]
         );
+
+        setSavedSatRec(satrec);
       }
     } catch (error) {
       //
@@ -87,8 +122,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    // todo: clean this up
-    getIssData();
+    getISSData();
   }, []);
 
   const linksData = [
